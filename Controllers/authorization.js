@@ -29,7 +29,7 @@ exports.get_presigned_url = (req, res) => {
 
     var accessToken = req.body.accessToken;
     var fileName = req.query.filename;
-    var jwk = JSON.parse(process.env.JWk);
+    var jwk = {"keys":[{"alg":"RS256","e":"AQAB","kid":"CpYfQP1KwhKcibRZ4kRXQHag8zM/Tk5O1aKogCLpjmY=","kty":"RSA","n":"wY_HvAZADavIL5JygtKNdP19Zza8BErCcHMupduKjPjZDnHLTnATuGpcMk5Xf2CBq8LprxLaB9ZmtI7WvJVQG0pkJ6IvQPeS-g4bZOz9giHmhGmzg7M9ZFIhSGS-NbFQx0-Sbo5AssL_I6OkMWHOotLuSe4gNTeUvYgxC2OhLFznGPLvar_giGRxPU2JDf5wZozTFyxcST5BP6OmfQKdIeljRItD4Ph0-5xNe8kkkLHYNmGPKtSv4-_VeKz-AY6oOwtZEYkVdz4UZRreExL2ZE5AUZVhwmYM1Cv_bXJQgHdUO-LZF0p3J4TScoaIwFuYQbAM2i0WuvTJ3jqgr7l2fw","use":"sig"},{"alg":"RS256","e":"AQAB","kid":"VBbR/gPvOEm5gMWpmDN1/qGvLE6C6qCFUTxGaBgf/Cc=","kty":"RSA","n":"te4PHvB44aaOLnnw2ATsu1SAPlZ_R0tyrgAmLipA4Nc2ROIJPbNMrAOCsho1YP5uBifKRIX3NGiNABUaH_ESXoBupK3ki9cwivrrM8r6Bxi2pakm3Iyz4rFgtJr2M3WOAtDlJ0GuWNR-yGt_cqyKLu9Ye-6IzI9Z5Z6WjPzwCGRCAQF1pTP6iO5Rfp-J_uh0dFBLT_mrAvUq2_IVdneOt7y1_lj9QXDoMrLm5oZKpcNb3KqqOEdJrbyKfKl8L6W0I24ij2qTbj7kiEtjweMlydJSzJS20RuhGk8BYOPqVt5xeaZpGXPkWocOF2ptbrEh9-w16R8uNTGpRKnLSrQ2OQ","use":"sig"}]};
     var pem = jwkToPem(jwk.keys[1]);
     jwt.verify(accessToken, pem,{algorithms: ["RS256"]} , function(err, decoded) {
         if(err){
