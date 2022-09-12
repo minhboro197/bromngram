@@ -29,7 +29,7 @@ exports.get_presigned_url = (req, res) => {
 
     var accessToken = req.body.accessToken;
     var fileName = req.query.filename;
-    var jwk = JSON.parse(JWk);
+    var jwk = JSON.parse(.env.JWk);
     var pem = jwkToPem(jwk.keys[1]);
     jwt.verify(accessToken, pem,{algorithms: ["RS256"]} , function(err, decoded) {
         if(err){
