@@ -104,7 +104,7 @@ exports.list_song_from_playlist = (req, res) => {
     var playlistid = req.query.playlist_id;
 
 
-    var jwk = JSON.parse(process.env.JWk);
+    var jwk = process.env.JWk;
     var pem = jwkToPem(jwk.keys[1]);
     jwt.verify(accessToken, pem,{algorithms: ["RS256"]} , function(err, decoded) {
         if(err){
