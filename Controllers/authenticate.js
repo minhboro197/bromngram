@@ -1,6 +1,8 @@
 var AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 var AWS = require("aws-sdk");
 require('dotenv').config()
+var jwt = require('jsonwebtoken');
+var jwkToPem = require('jwk-to-pem');
 
 exports.confirm_email = (req, res) => {
     var confirmCode = req.body.confirm_code;
@@ -77,6 +79,7 @@ exports.register = (req, res) => {
     userPool.signUp(username, password, attributeList, null, function(err,result){
         if (err) {
             res.status(400).send(err.message || JSON.stringify(err))
+            return
         }
         var cognitoUser = result.user;
         res.send("Register successfully username: "+cognitoUser.getUsername());
@@ -138,35 +141,51 @@ exports.login = (req, res) => {
     
         onFailure: function(err) {
             res.status(400).send(err.message || JSON.stringify(err));
+            return;
         },
     });
 }
 
 exports.signout = (req, res) => {
+    var accessToken = req.body.accessToken;
+
     var poolData = {
         UserPoolId: process.env.USER_POOL_ID, // Your user pool id here
         ClientId: process.env.CLIENT_ID, // Your client id here
     };
     var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
     
-    var userData = {
-        Username: req.query.username,
-        Pool: userPool,
-    };
-    var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-
-    cognitoUser.getSession((err, result) =>{
-        if(result){
-            cognitoUser.globalSignOut({
-                onSuccess: function(result){
-                    console.log(result)
-                },
-                onFailure: function(err){
-                    console.log(err)
-                },
-              });
+    var accessToken = req.body.accessToken;
+    var jwk = JSON.parse(process.env.JWk);
+    var pem = jwkToPem(jwk.keys[1]);
+    jwt.verify(accessToken, pem,{algorithms: ["RS256"]} , function(err, decoded) {
+        if(err){
+            res.status(400).send(err);
+            return
         }
+
+        var userData = {
+            Username: decoded.username,
+            Pool: userPool,
+        };
+        var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+        cognitoUser.getSession((err, result) =>{
+            if(result){
+                cognitoUser.globalSignOut({
+                    onSuccess: function(result){
+                        res.send(result)
+                    },
+                    onFailure: function(err){
+                        res.status(400).send(err)
+                        return
+                    },
+                });
+            }else{
+                res.status(400).send("Already signed out");
+                return
+            }
+        })
     })
-    res.send("ok")
 }
 

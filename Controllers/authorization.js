@@ -5,7 +5,7 @@ var jwkToPem = require('jwk-to-pem');
 require('dotenv').config()
 
 exports.refresh_token = (req, res) => {
-    var refresh_Token = req.body.refresh_token;
+    var refresh_Token = req.body.refreshToken;
     var params = {
         AuthFlow: "REFRESH_TOKEN_AUTH", /* required */
         ClientId: process.env.CLIENT_ID, /* required */
@@ -17,6 +17,7 @@ exports.refresh_token = (req, res) => {
       cognito.initiateAuth(params, function(err, data) {
         if (err){
             res.status(400).send(err)
+            return
         }
         else {
             res.send(data);
@@ -32,8 +33,8 @@ exports.get_presigned_url = (req, res) => {
     var pem = jwkToPem(jwk.keys[1]);
     jwt.verify(accessToken, pem,{algorithms: ["RS256"]} , function(err, decoded) {
         if(err){
-            console.log(err)
             res.status(400).send("Invalid Token")
+            return
         }
         var poolData = {
             UserPoolId: process.env.USER_POOL_ID, // Your user pool id here
@@ -66,10 +67,11 @@ exports.get_presigned_url = (req, res) => {
                         console.error(error);
                     } else {
                         var s3 = new AWS.S3();
-                        var params = {Bucket:'mybucketapp', Key: fileName, Expires: 60};
+                        var params = {Bucket:'mybucketapp', Key: fileName, Expires: 300};
                         s3.getSignedUrl('getObject', params, function (err, url) {
                             if(err){
                                 res.status(404).send("No File Found")
+                                return;
                             }else{
                                 res.send({key:url })
                             }
@@ -78,6 +80,7 @@ exports.get_presigned_url = (req, res) => {
                 });
             }else{
                 res.status(400).send("User signed out")
+                return
             }
         })
     })
