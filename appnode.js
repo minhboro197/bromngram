@@ -1,7 +1,9 @@
 const { ListBucketsCommand } = require("@aws-sdk/client-s3");
+const { ListObjectsCommand } = require("@aws-sdk/client-s3");
 const { s3Client } = require("./s3Client.js");
 const {pool}  = require("./database.js");
 const {uploadFile} = require('./uploadfile.js');
+require('dotenv').config()
 
 var bodyParser = require('body-parser')
 
@@ -211,11 +213,9 @@ app.get('/song/queries/:pagesize/:pagenum', (req, res) =>{
             
         return
     }else{
-        res.send("wrong query")
+        res.status(400).send("wrong query")
         return
     }
-    
-   
 })
 
 app.put("/song/updatelike", (req, res) =>{
@@ -304,7 +304,6 @@ app.post("/playlist", (req, res) =>{
             conn.release();
         })
     })
-
 })
 
 // Update Playlist
@@ -433,9 +432,10 @@ app.delete("/playlist/song", (req, res) => {
         })
     })
 })
-
+////
 app.post("/confirm", (req, res) => {
     var confirmCode = req.body.confirm_code;
+    var username = req.body.username;
 
     var poolData = {
         UserPoolId: 'ap-southeast-1_PFUux5qaA', // Your user pool id here
@@ -444,7 +444,7 @@ app.post("/confirm", (req, res) => {
     
     var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
     var userData = {
-        Username: 'MinhVu2',
+        Username: username,
         Pool: userPool,
     };
     
@@ -463,8 +463,15 @@ app.post("/confirm", (req, res) => {
 
 
 var AmazonCognitoIdentity = require('amazon-cognito-identity-js');
+////
+app.post("/register", (req,res) => {
+    var email = req.body.email;
+    var phone_number = req.body.phone_number;
+    var birthdate = req.body.birthdate;
+    var gender = req.body.gender;
+    var username = req.body.username;
+    var password = req.body.password;
 
-function testCognito(){
     var poolData = {
         UserPoolId: 'ap-southeast-1_PFUux5qaA', // Your user pool id here
         ClientId: '3rfeiefhfq1c0qi0itfe4tdl50', // Your client id here
@@ -475,54 +482,50 @@ function testCognito(){
     
     var dataEmail = {
         Name: 'email',
-        Value: 'minhboro2@gmail.com',
+        Value: email,
     };
     
     var dataPhoneNumber = {
         Name: 'phone_number',
-        Value: '+15555555555',
+        Value: phone_number,
     };
     var dataBirth = {
         Name: 'birthdate',
-        Value: '1999-09-09',
+        Value: birthdate,
     }
     var dataGender = {
         Name: 'gender',
-        Value:'male',
+        Value: gender,
     }
-
     var attributeEmail = new AmazonCognitoIdentity.CognitoUserAttribute(dataEmail);
     var attributePhoneNumber = new AmazonCognitoIdentity.CognitoUserAttribute(
         dataPhoneNumber
     );
     var attributeBirth = new AmazonCognitoIdentity.CognitoUserAttribute(dataBirth);
     var attributeGender = new AmazonCognitoIdentity.CognitoUserAttribute(dataGender);
-
     
     attributeList.push(attributeEmail);
     attributeList.push(attributePhoneNumber);
     attributeList.push(attributeBirth);
     attributeList.push(attributeGender);
 
-    
-    userPool.signUp('MinhVu2', 'Minh123456!', attributeList, null, function(
-        err,
-        result
-    ){
+    userPool.signUp(username, password, attributeList, null, function(err,result){
         if (err) {
-            console.log(err.message || JSON.stringify(err));
-            return;
+            res.status(400).send(err.message || JSON.stringify(err))
         }
         var cognitoUser = result.user;
-        console.log('user name is ' + cognitoUser.getUsername());
+        res.send("Register successfully username: "+cognitoUser.getUsername());
     });
-}
+})
 
 var AWS = require("aws-sdk");
-function loginUserSession(){
+app.post("/login", (req, res) => {
+    var username = req.body.username;
+    var password = req.body.password;
+
     var authenticationData = {
-        Username: 'MinhVu2',
-        Password: 'Minh123456!',
+        Username: username,
+        Password: password,
     };
     var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(
         authenticationData
@@ -533,65 +536,170 @@ function loginUserSession(){
     };
     var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
     var userData = {
-        Username: 'MinhVu2',
+        Username: username,
         Pool: userPool,
     };
     var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
     cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: function(result) {
             var accessToken = result.getAccessToken().getJwtToken();
-    
-            //POTENTIAL: Region needs to be set if not already set previously elsewhere.
+            var refreshToken = result.getRefreshToken();
+            var idToken = result.getIdToken().getJwtToken();
+            
             AWS.config.region = 'ap-southeast-1';
     
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                 IdentityPoolId: 'ap-southeast-1:a1bd5688-cc6b-4067-9f86-dbe564f6709c', // your identity pool id here
                 Logins: {
-                    // Change the key below according to the specific region your user pool is in.
                     'cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_PFUux5qaA': result
                         .getIdToken()
                         .getJwtToken(),
                 },
             });
-            console.log(accessToken)
-            console.log(new AWS.CognitoIdentityCredentials({
-                IdentityPoolId: 'ap-southeast-1:a1bd5688-cc6b-4067-9f86-dbe564f6709c', // your identity pool id here
-                Logins: {
-                    // Change the key below according to the specific region your user pool is in.
-                    'cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_PFUux5qaA': result
-                        .getIdToken()
-                        .getJwtToken(),
-                },
-            }))
-
     
             //refreshes credentials using AWS.CognitoIdentity.getCredentialsForIdentity()
             AWS.config.credentials.refresh(error => {
                 if (error) {
                     console.error(error);
                 } else {
-                    // Instantiate aws sdk service objects now that the credentials have been updated.
-                    var s3 = new AWS.S3();
-                    s3.listBuckets(function(err, data) {
-                        if (err) {
-                            console.log("What the fuc")
-                          console.log("Error", err);
-                        } else {
-                          console.log("Success", data.Buckets);
-                        }
-                      });
-                    console.log('Successfully logged!');
+                    var respond = {
+                        accessToken: accessToken,
+                        idToken: idToken,
+                        refreshToken: refreshToken
+                    }
+                    res.send(respond)
                 }
             });
         },
     
         onFailure: function(err) {
-            console.log("here?")
-            console.log(err.message || JSON.stringify(err));
+            res.status(400).send(err.message || JSON.stringify(err));
         },
     });
-}
+})
 
+
+var jwt = require('jsonwebtoken');
+var jwkToPem = require('jwk-to-pem');
+const { CognitoIdentityServiceProvider } = require("aws-sdk");
+
+app.post("/verify", (req, res) => {
+    var token = req.body.jwk;
+    var jwk = JSON.parse(process.env.JWK);
+    var pem = jwkToPem(jwk.keys[1]);
+    jwt.verify(token, pem,{algorithms: ["RS256"]} , function(err, decoded) {
+        if(err){
+            console.log(err)
+        }
+        console.log(decoded)
+        res.send("ok")
+    })
+})
+
+app.post("/refreshtoken", (req, res) =>{
+    var refresh_Token = req.body.refresh_token;
+    var params = {
+        AuthFlow: "REFRESH_TOKEN_AUTH", /* required */
+        ClientId: '3rfeiefhfq1c0qi0itfe4tdl50', /* required */
+        AuthParameters: {
+          'REFRESH_TOKEN': refresh_Token,
+        }
+      };
+      var cognito = new AWS.CognitoIdentityServiceProvider();
+      cognito.initiateAuth(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else {
+            console.log(data);
+            res.send(data);
+        }           // successful response
+    });
+})
+////
+app.post("/signout", (req,res) =>{
+    var poolData = {
+        UserPoolId: 'ap-southeast-1_PFUux5qaA', // Your user pool id here
+        ClientId: '3rfeiefhfq1c0qi0itfe4tdl50', // Your client id here
+    };
+    var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+    
+    var userData = {
+        Username: req.query.username,
+        Pool: userPool,
+    };
+    var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+    cognitoUser.getSession((err, result) =>{
+        if(result){
+            cognitoUser.globalSignOut({
+                onSuccess: function(result){
+                    console.log(result)
+                },
+                onFailure: function(err){
+                    console.log(err)
+                },
+              });
+        }
+    })
+    res.send("ok")
+})
+
+app.get("/getpresignedurl", (req, res) => {
+    var token = req.body.jwt;
+    var fileName = req.query.filename;
+    var jwk = JSON.parse(process.env.JWk);
+    var pem = jwkToPem(jwk.keys[1]);
+    jwt.verify(token, pem,{algorithms: ["RS256"]} , function(err, decoded) {
+        if(err){
+            console.log(err)
+            res.status(400).send("Invalid Token")
+        }
+        var poolData = {
+            UserPoolId: 'ap-southeast-1_PFUux5qaA', // Your user pool id here
+            ClientId: '3rfeiefhfq1c0qi0itfe4tdl50', // Your client id here
+        };
+        var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+        
+        var userData = {
+            Username: decoded.username,
+            Pool: userPool,
+        };
+        var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+        cognitoUser.getSession((err, result) =>{
+            if(result){
+                AWS.config.region = 'ap-southeast-1';
+
+                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                    IdentityPoolId: 'ap-southeast-1:a1bd5688-cc6b-4067-9f86-dbe564f6709c', // your identity pool id here
+                    Logins: {
+                        // Change the key below according to the specific region your user pool is in.
+                        'cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_PFUux5qaA': result
+                            .getIdToken()
+                            .getJwtToken(),
+                    },
+                });
+ 
+                AWS.config.credentials.refresh(error => {
+                    if (error) {
+                        console.error(error);
+                    } else {
+                        var s3 = new AWS.S3();
+                        var params = {Bucket:'mybucketapp', Key: fileName, Expires: 60};
+                        s3.getSignedUrl('getObject', params, function (err, url) {
+                            if(err){
+                                res.status(404).send("No File Found")
+                            }else{
+                                res.send({key:url })
+                            }
+                        });
+                    }
+                });
+            }else{
+                res.status(400).send("User signed out")
+            }
+        })
+    })
+})
 
 var server = app.listen(3000, ()=>{
     console.log('running on: ', server.address().port)
