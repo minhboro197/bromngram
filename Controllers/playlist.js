@@ -1,4 +1,5 @@
 const {pool}  = require("../database.js");
+const {poolreplica} = require("../repdatabase.js")
 var bodyParser = require('body-parser');
 require('dotenv').config()
 var jwt = require('jsonwebtoken');
@@ -142,7 +143,7 @@ exports.get_playlist_user = (req, res) =>{
         searchUser = "SELECT id FROM `user` WHERE username = '" + decoded.username + "'";
         listPlaylist = "SELECT * FROM `playlist_owner` WHERE user_id = (" + searchUser + ")";
 
-        pool.getConnection(function(err, conn){
+        poolreplica.getConnection(function(err, conn){
             if(err){
                 res.status(400).send("can't connect to the database")
                 return

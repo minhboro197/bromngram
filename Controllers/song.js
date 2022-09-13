@@ -162,7 +162,7 @@ exports.filter_song = (req, res) =>{
     if(conditions != ''){
         query += " WHERE " + conditions + " "+ pagination;
 
-            pool.getConnection(function(err, conn){
+        poolreplica.getConnection(function(err, conn){
                 if(err){
                     res.status(400).send("can't connect to the database")
                     return
