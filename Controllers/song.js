@@ -1,4 +1,5 @@
 const {pool}  = require("../database.js");
+const {poolreplica} = require("../repdatabase.js")
 var bodyParser = require('body-parser');
 
 exports.update_like = (req, res) => {
@@ -93,7 +94,7 @@ exports.search_general = (req, res) => {
         var queryAdd = query + pagination;
     }
 
-    pool.getConnection(function(err, conn){
+    poolreplica.getConnection(function(err, conn){
         if(err){
             res.status(400).send("can't connect to the database")
             return
