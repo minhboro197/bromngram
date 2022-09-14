@@ -101,7 +101,7 @@ exports.delete_song_from_playlist = (req, res) => {
 };
 
 exports.list_song_from_playlist = (req, res) => {
-    var accessToken = req.body.accessToken;
+    var accessToken = req.query.accessToken;
     var playlistid = req.query.playlist_id;
 
 
