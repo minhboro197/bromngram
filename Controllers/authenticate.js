@@ -1,6 +1,7 @@
+const path = require('path'); 
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 var AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 var AWS = require("aws-sdk");
-require('dotenv').config()
 var jwt = require('jsonwebtoken');
 var jwkToPem = require('jwk-to-pem');
 
