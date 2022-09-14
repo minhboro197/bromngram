@@ -4,7 +4,7 @@ const connection = mysql.createPool({
     host: "read.replica.local",
     port: process.env.PORT,
     database: process.env.DATABASE,
-    user : process.env.USERNAME,
+    user : process.env.USER,
     password: process.env.PASSWORD
 });
 
