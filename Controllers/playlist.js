@@ -1,7 +1,8 @@
+const path = require('path'); 
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const {pool}  = require("../database.js");
 const {poolreplica} = require("../repdatabase.js")
 var bodyParser = require('body-parser');
-require('dotenv').config()
 var jwt = require('jsonwebtoken');
 var jwkToPem = require('jwk-to-pem');
 
