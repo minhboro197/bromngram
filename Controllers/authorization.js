@@ -1,8 +1,9 @@
+const path = require('path'); 
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 var AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 var AWS = require("aws-sdk");
 var jwt = require('jsonwebtoken');
 var jwkToPem = require('jwk-to-pem');
-require('dotenv').config()
 
 exports.refresh_token = (req, res) => {
     var refresh_Token = req.body.refreshToken;
