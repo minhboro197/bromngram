@@ -1,4 +1,5 @@
 const mysql = require('mysql')
+require('dotenv').config()
 
 const connection = mysql.createPool({
     host: "read.replica.local",
