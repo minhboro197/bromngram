@@ -2,6 +2,7 @@ const mysql = require('mysql')
 const path = require('path'); 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// enviroment variable is set in User Data when lauching EC2 instance
 const connection = mysql.createPool({
     host: process.env.HOST_DATABASE,
     port: process.env.PORT_DATABASE,
